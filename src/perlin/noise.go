@@ -17,6 +17,7 @@ type NoiseFunc3d func(w, h, d, cx, cy, cz, x, y, z, f int) float32
 // c is the chunk number
 // x is the coordinate within the chunk. It can go over to the next chunk.
 func canonical(w, c, x int) (cc, cx int) {
+  cc = c
   if x >= w {
     cc = c + x/w
     x -= (cc - c) * w

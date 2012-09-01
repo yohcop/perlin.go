@@ -1,0 +1,9 @@
+== Tile based Perlin noise generator ==
+
+Can generate tiled noise based on a chunk coordinate (cx, cy, cz), and the size
+of that chunk (width, height and depth).
+
+== License ==
+
+Distributed under an Apache v2.0 license:
+http://www.apache.org/licenses/LICENSE-2.0.html

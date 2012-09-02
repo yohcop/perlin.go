@@ -16,18 +16,26 @@ func fromToPercent(c, x, w, pi int) (cfrom, from, cto, to int, percent float32) 
   chunk_interval_start := c / i_chunk_per_interval * i_chunk_per_interval
   percent_chunk := float32(c % i_chunk_per_interval) / chunk_per_interval
 
-  percent = float32(x) / float32(w) / chunk_per_interval + percent_chunk
+  cell_start := x / pi * pi
+  percent = float32(x - cell_start) / (float32(w) * chunk_per_interval) + percent_chunk
 
   cfrom = chunk_interval_start
   from = x / int(chunk_per_interval * float32(w)) * pi
 
-  cto = int(float32(chunk_interval_start) + chunk_per_interval)
-  to = from + pi
+  // TODO: can we compute 'blah' directly ?
+  blah := 0
+  if pi < w {
+    blah = pi
+  }
+  cto = int(float32(chunk_interval_start) + chunk_per_interval) + (from + blah) / w
+  to = (from + blah) % w
 
   //fmt.Println(
   //    "x", x,
   //    "pi", pi,
-  //    "chunk_per_interval", chunk_per_interval,
+  //    "cell_start", cell_start,
+  //    //"x-cell_start", x-cell_start,
+  //    //"chunk_per_interval", chunk_per_interval,
   //    //"start_interval", start_interval,
   //    //"chunk_interval_start", chunk_interval_start,
   //    "percent_chunk", percent_chunk,

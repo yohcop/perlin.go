@@ -12,6 +12,8 @@ import (
 var persist = flag.Float64("p", 0.95, "Persistance")
 var from = flag.Int("f", 1, "From this harmonic")
 var to = flag.Int("t", 4, "To this harmonic")
+var at = flag.Int("at", -1, "If set, -f and -t are set to -at value")
+
 var d = flag.Int("d", 1, "Dimensions")
 var seed = flag.Int64("seed", 0, "Seed")
 
@@ -44,6 +46,10 @@ func main() {
 
   html := ""
 
+  if *at != -1 {
+    *from = *at
+    *to = *at
+  }
   if *d == 1 {
     for ccx := *cx; ccx < *cx + *dx; ccx++ {
       out := perlin.Noise1d(*x, ccx, float32(*persist), *from, 1 + *to, perlin.TileNoise)

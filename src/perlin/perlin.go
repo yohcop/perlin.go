@@ -7,43 +7,49 @@ import (
 
 var _ = fmt.Println
 
-func fromToPercent(c, x, w, pi int) (cfrom, from, cto, to int, percent float32) {
-  chunk_per_interval := float32(pi) / float32(w)
+func chunkIntervalStart(c, w, step int) int {
+  chunk_per_interval := float32(step) / float32(w)
   i_chunk_per_interval := 1
-  if pi > w {
+  if step > w {
     i_chunk_per_interval = int(chunk_per_interval)
   }
-  chunk_interval_start := c / i_chunk_per_interval * i_chunk_per_interval
-  percent_chunk := float32(c % i_chunk_per_interval) / chunk_per_interval
+  if c < 0 {
+    return - ((-c -1) / i_chunk_per_interval * i_chunk_per_interval + i_chunk_per_interval)
+  }
+  return c / i_chunk_per_interval * i_chunk_per_interval
+}
+
+func fromToPercent(c, x, w, pi int) (cfrom, from, cto, to int, percent float32) {
+  chunk_per_interval := float32(pi) / float32(w)
+  chunk_interval_start := chunkIntervalStart(c, w, pi)
+  percent_chunk := float32(c - chunk_interval_start) / chunk_per_interval
 
   cell_start := x / pi * pi
   percent = float32(x - cell_start) / (float32(w) * chunk_per_interval) + percent_chunk
 
-  cfrom = chunk_interval_start
-  from = x / int(chunk_per_interval * float32(w)) * pi
+  tmp_from := x / int(chunk_per_interval * float32(w)) * pi
+  cfrom = chunk_interval_start + tmp_from / w
+  from = tmp_from % w
 
   // TODO: can we compute 'blah' directly ?
   blah := 0
   if pi < w {
     blah = pi
   }
-  cto = int(float32(chunk_interval_start) + chunk_per_interval) + (from + blah) / w
-  to = (from + blah) % w
+  tmp_to := from + blah
+  cto = int(float32(chunk_interval_start) + chunk_per_interval) + tmp_to / w
+  to = tmp_to % w
 
-  //fmt.Println(
-  //    "x", x,
-  //    "pi", pi,
-  //    "cell_start", cell_start,
-  //    //"x-cell_start", x-cell_start,
-  //    //"chunk_per_interval", chunk_per_interval,
-  //    //"start_interval", start_interval,
-  //    //"chunk_interval_start", chunk_interval_start,
-  //    "percent_chunk", percent_chunk,
-  //    "cfrom", cfrom,
-  //    "from", from,
-  //    "cto", cto,
-  //    "to", to,
-  //    )
+  if c < 0 && pi < w {
+    cto -= 1
+  }
+  /*
+  fmt.Printf(
+      "x=%d,%d pi=%d |%f| {%d@%f} [%d,%d]--(%f)--[%d,%d]\n",
+      c, x, pi, chunk_per_interval,
+      chunk_interval_start, percent_chunk, cfrom, from, percent, cto, to,
+      )
+  */
   return
 }
 
@@ -156,7 +162,7 @@ func Noise1d(w, c int, persist float32, f, t int, noise NoiseFunc1d) []float32 {
     }
     for x := range out {
       cfrom, from, cto, to, percent := fromToPercent(c, x, w, pi)
-      fmt.Printf("from=%d to=%d percent=%f\n", from, to, percent)
+      //fmt.Printf("from=%d,%d to=%d,%d percent=%f\n", cfrom, from, cto, to, percent)
       out[x] = (1-p) * out[x] + p * noiseAt1d(w, cfrom, from, cto, to, pi, percent, noise)
     }
   }

@@ -63,7 +63,7 @@ func noiseAt2d(w, h, cfromX, fromX, ctoX, toX, cfromY, fromY, ctoY, toY, pi int,
   } else {
     interpolationFromX = LinearInterpolation(
         noise(w, h, cfromX, cfromY, fromX, fromY, pi),
-        noise(w, h, fromX, ctoY, fromX, toY, pi),
+        noise(w, h, cfromX, ctoY, fromX, toY, pi),
         percentY)
   }
   if percentX == 0 {

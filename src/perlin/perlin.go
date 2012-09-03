@@ -88,14 +88,18 @@ func noiseAt2d(w, h, cfromX, fromX, ctoX, toX, cfromY, fromY, ctoY, toY, pi int,
   return LinearInterpolation(interpolationFromX, interpolationToX, percentX)
 }
 
-func noiseAt3d(w, h, d, cx, cy, cz, fromX, toX, fromY, toY, fromZ, toZ, pi int, percentX, percentY, percentZ float32, noise NoiseFunc3d) float32 {
+func noiseAt3d(w, h, d,
+    cfromX, fromX, ctoX, toX,
+    cfromY, fromY, ctoY, toY,
+    cfromZ, fromZ, ctoZ, toZ, pi int, percentX, percentY, percentZ float32, noise NoiseFunc3d) float32 {
   var interpolationFromXFromY float32 = 0
   if percentZ == 0 {
-    interpolationFromXFromY = noise(w, h, d, cx, cy, cz, fromX, fromY, fromZ, pi)
+    interpolationFromXFromY = noise(
+        w, h, d, cfromX, cfromY, cfromZ, fromX, fromY, fromZ, pi)
   } else {
     interpolationFromXFromY = LinearInterpolation(
-        noise(w, h, d, cx, cy, cz, fromX, fromY, fromZ, pi),
-        noise(w, h, d, cx, cy, cz, fromX, fromY, toZ, pi),
+        noise(w, h, d, cfromX, cfromY, cfromZ, fromX, fromY, fromZ, pi),
+        noise(w, h, d, cfromX, cfromY, ctoZ, fromX, fromY, toZ, pi),
         percentZ)
   }
 
@@ -105,11 +109,12 @@ func noiseAt3d(w, h, d, cx, cy, cz, fromX, toX, fromY, toY, fromZ, toZ, pi int, 
   } else {
     var interpolationFromXToY float32 = 0
     if percentZ == 0 {
-      interpolationFromXFromY = noise(w, h, d, cx, cy, cz, fromX, toY, fromZ, pi)
+      interpolationFromXFromY = noise(
+          w, h, d, cfromX, ctoY, cfromZ, fromX, toY, fromZ, pi)
     } else {
       interpolationFromXFromY = LinearInterpolation(
-          noise(w, h, d, cx, cy, cz, fromX, toY, fromZ, pi),
-          noise(w, h, d, cx, cy, cz, fromX, toY, toZ, pi),
+          noise(w, h, d, cfromX, ctoY, cfromZ, fromX, toY, fromZ, pi),
+          noise(w, h, d, cfromX, ctoY, ctoZ, fromX, toY, toZ, pi),
           percentZ)
     }
     interpolationFromX = LinearInterpolation(
@@ -122,11 +127,12 @@ func noiseAt3d(w, h, d, cx, cy, cz, fromX, toX, fromY, toY, fromZ, toZ, pi int, 
 
   var interpolationToXFromY float32 = 0
   if percentZ == 0 {
-    interpolationToXFromY = noise(w, h, d, cx, cy, cz, toX, fromY, fromZ, pi)
+    interpolationToXFromY = noise(
+        w, h, d, ctoX, cfromY, cfromZ, toX, fromY, fromZ, pi)
   } else {
     interpolationToXFromY = LinearInterpolation(
-        noise(w, h, d, cx, cy, cz, toX, fromY, fromZ, pi),
-        noise(w, h, d, cx, cy, cz, toX, fromY, toZ, pi),
+        noise(w, h, d, ctoX, cfromY, cfromZ, toX, fromY, fromZ, pi),
+        noise(w, h, d, ctoX, cfromY, ctoZ, toX, fromY, toZ, pi),
         percentZ)
   }
 
@@ -136,11 +142,12 @@ func noiseAt3d(w, h, d, cx, cy, cz, fromX, toX, fromY, toY, fromZ, toZ, pi int, 
   } else {
     var interpolationToXToY float32 = 0
     if percentZ == 0 {
-      interpolationToXFromY = noise(w, h, d, cx, cy, cz, toX, toY, fromZ, pi)
+      interpolationToXFromY = noise(
+          w, h, d, ctoX, ctoY, cfromZ, toX, toY, fromZ, pi)
     } else {
       interpolationToXFromY = LinearInterpolation(
-          noise(w, h, d, cx, cy, cz, toX, toY, fromZ, pi),
-          noise(w, h, d, cx, cy, cz, toX, toY, toZ, pi),
+          noise(w, h, d, ctoX, ctoY, cfromZ, toX, toY, fromZ, pi),
+          noise(w, h, d, ctoX, ctoY, ctoZ, toX, toY, toZ, pi),
           percentZ)
     }
     interpolationToX = LinearInterpolation(
@@ -212,13 +219,17 @@ func Noise3d(w, h, d, cx, cy, cz int, persist float32, f, t int, noise NoiseFunc
       p = 1
     }
     for x := 0; x < w; x++ {
-      _, fromX, _, toX, percentX := fromToPercent(cx, x, w, pi)
+      cfromX, fromX, ctoX, toX, percentX := fromToPercent(cx, x, w, pi)
       for y := 0; y < h; y++ {
-        _, fromY, _, toY, percentY := fromToPercent(cy, y, h, pi)
+        cfromY, fromY, ctoY, toY, percentY := fromToPercent(cy, y, h, pi)
         for z := 0; z < d; z++ {
-          _, fromZ, _, toZ, percentZ := fromToPercent(cz, z, d, pi)
+          cfromZ, fromZ, ctoZ, toZ, percentZ := fromToPercent(cz, z, d, pi)
           out[x][y][z] = (1-p) * out[x][y][z] + p * noiseAt3d(
-              w, h, d, cx, cy, cz, fromX, toX, fromY, toY, fromZ, toZ, pi,
+              w, h, d,
+              cfromX, fromX, ctoX, toX,
+              cfromY, fromY, ctoY, toY,
+              cfromZ, fromZ, ctoZ, toZ,
+              pi,
               percentX, percentY, percentZ, noise)
         }
       }

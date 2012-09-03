@@ -9,7 +9,7 @@ import (
   "image/png"
 )
 
-var persist = flag.Float64("p", 0.95, "Persistance")
+var persist = flag.Float64("p", 0.5, "Persistance")
 var from = flag.Int("f", 1, "From this harmonic")
 var to = flag.Int("t", 4, "To this harmonic")
 var at = flag.Int("at", -1, "If set, -f and -t are set to -at value")
@@ -44,7 +44,18 @@ func main() {
   flag.Parse()
   rand.Seed(*seed)
 
-  html := ""
+  html := `
+  <script>
+  function ImgError(source) {
+    var s = source.src;
+    source.src = "";
+    window.setTimeout(function() {
+        source.src = s;
+    }, 500 + Math.random(200) - 100);
+    return true;
+  }
+  </script>
+  `
 
   if *at != -1 {
     *from = *at
@@ -55,14 +66,14 @@ func main() {
       out := perlin.Noise1d(*x, ccx, float32(*persist), *from, 1 + *to, perlin.TileNoise)
       if len(*img) > 0 {
         filename := fmt.Sprintf("%s_%d.png", *img, ccx)
-        html += fmt.Sprintf("<img src=\"%s\">", filename)
+        html += fmt.Sprintf("<img src=\"%s\" onerror='ImgError(this)'>", filename)
         f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0600)
-        defer f.Close()
         if err == nil {
           png.Encode(f, perlin.NewNoise1dImage(*x, *y, out))
         } else {
           fmt.Println(err.Error())
         }
+        f.Close()
       }
     }
   } else if *d == 2 {
@@ -71,29 +82,75 @@ func main() {
         out := perlin.Noise2d(*x, *y, ccx, ccy, float32(*persist), *from, 1 + *to, perlin.TileNoise2d)
         if len(*img) > 0 {
           filename := fmt.Sprintf("%s_%d_%d.png", *img, ccx, ccy)
-          html += fmt.Sprintf("<img src=\"%s\">", filename)
+          html += fmt.Sprintf("<img src=\"%s\" onerror='ImgError(this)'>", filename)
           f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0600)
-          defer f.Close()
           if err == nil {
             png.Encode(f, perlin.NewNoise2dImage(*x, *y, out))
           } else {
             fmt.Println(err.Error())
           }
+          f.Close()
         }
       }
       html += "<br>"
     }
   } else if *d == 3 {
-    out := perlin.Noise3d(*x, *y, *z, *cx, *cy, *cz, float32(*persist), *from, 1 + *to, perlin.TileNoise3d)
-    for x := range out {
-      for y := range out[x] {
-        for z, v := range out[x][y] {
-          if v > 0.4 {
-            fmt.Printf("%d %d %d %f\n", x, y, z, v)
+    for ccy := *cy; ccy < *cy + *dy; ccy++ {
+      for ccx := *cx; ccx < *cx + *dx; ccx++ {
+        for ccz := *cz; ccz < *cz + *dz; ccz++ {
+          out := perlin.Noise3d(*x, *y, *z, ccx, ccy, ccz,
+                   float32(*persist), *from, 1 + *to, perlin.TileNoise3d)
+          if len(*img) > 0 {
+            for altitude := 0; altitude < *z; altitude++ {
+              filename := fmt.Sprintf("%s_%d_%d_%d_%d.png", *img, ccx, ccy, ccz, altitude)
+              html += fmt.Sprintf(
+                  "<img class=\"a_%d_%d\" src=\"%s\" onerror='ImgError(this)'>",
+                  ccz, altitude, filename)
+              f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0600)
+              if err == nil {
+                png.Encode(f, perlin.NewNoise3dImage(*x, *y, *z, altitude, out))
+              } else {
+                fmt.Println(err.Error())
+              }
+              f.Close()
+            }
           }
         }
       }
+      html += "<br>"
     }
+    html += fmt.Sprintf(`
+    <div id="at"></div>
+    <script>
+    var startcz = %d;
+    var dz = %d;
+    var z = %d;
+
+    var at_el = document.getElementById("at")
+    var at_cz = startcz;
+    var at_z = 0;
+    window.setInterval(function() {
+      for(var i = 0; i < document.images.length; ++i) {
+        document.images[i].style.display = 'none';
+      }
+      at_z ++
+      if (at_z >= z) {
+        at_z = 0;
+        at_cz++;
+        if (at_cz >= startcz + dz) {
+          at_cz = startcz;
+        }
+      }
+      var cls = 'a_' + at_cz + '_' + at_z;
+      for(var i = 0; i < document.images.length; ++i) {
+        if (document.images[i].className === cls) {
+          document.images[i].style.display = '';
+        }
+      }
+      at_el.innerText = cls;
+    }, 200)
+    </script>
+    `, *cz, *dz, *z)
   }
 
   if len(*img) > 0 && len(html) > 0 {

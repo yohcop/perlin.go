@@ -53,3 +53,27 @@ func (n *Noise2dImage) Bounds() image.Rectangle {
 func (n *Noise2dImage) At(x, y int) color.Color {
   return color.Gray{uint8(n.noise[x][y] * 255)}
 }
+
+// -------------------------------------------------
+
+type Noise3dImage struct {
+  w, h, d int
+  altitude int
+  noise [][][]float32
+}
+
+func NewNoise3dImage(w, h, d, altitude int, noise [][][]float32) *Noise3dImage {
+  return &Noise3dImage{ w: w, h: h, d: d, altitude: altitude, noise: noise }
+}
+
+func (n *Noise3dImage) ColorModel() color.Model {
+  return color.RGBAModel
+}
+
+func (n *Noise3dImage) Bounds() image.Rectangle {
+  return image.Rect(0, 0, n.w, n.h)
+}
+
+func (n *Noise3dImage) At(x, y int) color.Color {
+  return color.Gray{uint8(n.noise[x][y][n.altitude] * 255)}
+}

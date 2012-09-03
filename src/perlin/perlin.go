@@ -109,10 +109,10 @@ func noiseAt3d(w, h, d,
   } else {
     var interpolationFromXToY float32 = 0
     if percentZ == 0 {
-      interpolationFromXFromY = noise(
+      interpolationFromXToY = noise(
           w, h, d, cfromX, ctoY, cfromZ, fromX, toY, fromZ, pi)
     } else {
-      interpolationFromXFromY = LinearInterpolation(
+      interpolationFromXToY = LinearInterpolation(
           noise(w, h, d, cfromX, ctoY, cfromZ, fromX, toY, fromZ, pi),
           noise(w, h, d, cfromX, ctoY, ctoZ, fromX, toY, toZ, pi),
           percentZ)
@@ -142,10 +142,10 @@ func noiseAt3d(w, h, d,
   } else {
     var interpolationToXToY float32 = 0
     if percentZ == 0 {
-      interpolationToXFromY = noise(
+      interpolationToXToY = noise(
           w, h, d, ctoX, ctoY, cfromZ, toX, toY, fromZ, pi)
     } else {
-      interpolationToXFromY = LinearInterpolation(
+      interpolationToXToY = LinearInterpolation(
           noise(w, h, d, ctoX, ctoY, cfromZ, toX, toY, fromZ, pi),
           noise(w, h, d, ctoX, ctoY, ctoZ, toX, toY, toZ, pi),
           percentZ)
